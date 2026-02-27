@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  MARRIED
+  UNMARRIED
+  WIDOW
+  DIVORCED
+}
+
+model User {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  password         String
+  phoneNumber      String?
+  profileCompleted Boolean        @default(false)
+  profilePhoto     String?
+  firstName        String?
+  lastName         String?
+  gender           Gender?
+  location         String?
+  maritalStatus    MaritalStatus?
+  dateOfBirth      DateTime?
+  profession       String?
+  education        String?
+  height           Float?
+  aboutYourself    String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  partnerPreference PartnerPreference?
+  favourites       Favourite[]    @relation("Favouriter")
+  favouritedBy     Favourite[]    @relation("Favourited")
+  matchesAsUser    Match[]        @relation("MatchUser")
+  matchesAsTarget  Match[]        @relation("MatchTarget")
+  participants     Participant[]
+  sentMessages     Message[]      @relation("MessageSender")
+  notifications    Notification[]
+}
+
+model PartnerPreference {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interestedIn    Gender
+  minAge          Int
+  maxAge          Int
+  preferredCities String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Favourite {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation("Favouriter", fields: [userId], references: [id], onDelete: Cascade)
+  targetUserId String
+  targetUser   User     @relation("Favourited", fields: [targetUserId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  @@unique([userId, targetUserId])
+}
+
+model Match {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation("MatchUser", fields: [userId], references: [id], onDelete: Cascade)
+  targetUserId String
+  targetUser User      @relation("MatchTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  seenAt     DateTime?
+  createdAt  DateTime  @default(now())
+  @@unique([userId, targetUserId])
+}
+
+model Conversation {
+  id            String        @id @default(uuid())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  participants  Participant[]
+  messages      Message[]
+}
+
+model Participant {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  image     String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

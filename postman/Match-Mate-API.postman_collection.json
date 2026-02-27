@@ -1,0 +1,287 @@
+{
+  "info": {
+    "name": "Match-Mate API",
+    "description": "NestJS backend API. Use **Login** first; token is saved to `access_token` for authenticated requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "access_token", "value": "" },
+    { "key": "user_id", "value": "" },
+    { "key": "conversation_id", "value": "" },
+    { "key": "target_user_id", "value": "" },
+    { "key": "match_id", "value": "" },
+    { "key": "notification_id", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{access_token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.access_token) {",
+                  "        pm.collectionVariables.set('access_token', json.access_token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{$randomEmail}}\",\n  \"password\": \"password123\",\n  \"phoneNumber\": \"+1234567890\"\n}"
+            },
+            "url": "{{base_url}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.access_token) {",
+                  "        pm.collectionVariables.set('access_token', json.access_token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/profile/me"
+          }
+        },
+        {
+          "name": "List Profiles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/profile/list?city=all&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["profile", "list"],
+              "query": [
+                { "key": "city", "value": "all" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Complete Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profilePhoto\": \"https://example.com/photo.jpg\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"gender\": \"MALE\",\n  \"location\": \"Texas, USA\",\n  \"maritalStatus\": \"UNMARRIED\",\n  \"dateOfBirth\": \"1995-01-15\",\n  \"profession\": \"Engineer\",\n  \"education\": \"BS Computer Science\",\n  \"height\": 175,\n  \"aboutYourself\": \"Love hiking and coffee.\"\n}"
+            },
+            "url": "{{base_url}}/profile/complete"
+          }
+        },
+        {
+          "name": "Set Partner Preference",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"interestedIn\": \"FEMALE\",\n  \"minAge\": 22,\n  \"maxAge\": 35,\n  \"preferredCities\": [\"Texas, USA\", \"California, USA\"]\n}"
+            },
+            "url": "{{base_url}}/profile/partner-preference"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Favourites",
+      "item": [
+        {
+          "name": "List Favourites",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/favourites/list"
+          }
+        },
+        {
+          "name": "Add Favourite",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/favourites/{{target_user_id}}"
+          }
+        },
+        {
+          "name": "Remove Favourite",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/favourites/{{target_user_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chats",
+      "item": [
+        {
+          "name": "Get Conversation List",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/chats"
+          }
+        },
+        {
+          "name": "Get or Create Conversation",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetUserId\": \"{{target_user_id}}\"\n}"
+            },
+            "url": "{{base_url}}/chats/with"
+          }
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/chats/{{conversation_id}}/messages?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["chats", "{{conversation_id}}", "messages"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Conversation Read",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/chats/{{conversation_id}}/read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/notifications?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["notifications"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "unreadOnly", "value": "false" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/notifications/{{notification_id}}/read"
+          }
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/notifications/read-all"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Matches",
+      "item": [
+        {
+          "name": "List Matches",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/matches?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["matches"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Match Seen",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/matches/{{match_id}}/seen"
+          }
+        },
+        {
+          "name": "Mark All Matches Seen",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/matches/seen-all"
+          }
+        },
+        {
+          "name": "Run Match Job (current user)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/matches/run-job"
+          }
+        }
+      ]
+    }
+  ]
+}
