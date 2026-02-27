@@ -9,6 +9,7 @@ import { CompleteProfileDto } from './dto/complete-profile.dto';
 import { PartnerPreferenceDto } from './dto/partner-preference.dto';
 import { Gender, MaritalStatus } from '@prisma/client';
 import { ERROR_MESSAGES } from '../constants/error-messages';
+import { SUCCESS_MESSAGES } from '../constants/success-messages';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
@@ -94,7 +95,7 @@ export class ProfileService {
 
     await this.updateProfileCompletedIfDone(userId);
     await this.matchesService.findAndStoreMatchesForUser(userId);
-    return this.sanitizeUser(user);
+    return { data: this.sanitizeUser(user), message: SUCCESS_MESSAGES.PROFILE.COMPLETE };
   }
 
   async setPartnerPreference(userId: string, dto: PartnerPreferenceDto) {
@@ -121,7 +122,7 @@ export class ProfileService {
 
     await this.updateProfileCompletedIfDone(userId);
     await this.matchesService.findAndStoreMatchesForUser(userId);
-    return preference;
+    return { data: preference, message: SUCCESS_MESSAGES.PROFILE.PARTNER_PREFERENCE };
   }
 
   private async updateProfileCompletedIfDone(userId: string) {

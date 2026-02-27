@@ -10,6 +10,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from '@prisma/client';
 import { ERROR_MESSAGES } from '../constants/error-messages';
+import { SUCCESS_MESSAGES } from '../constants/success-messages';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<{ access_token: string }> {
+  async register(dto: RegisterDto): Promise<{ access_token: string; message: string }> {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
     });
@@ -36,10 +37,10 @@ export class AuthService {
       },
     });
 
-    return this.signToken(user);
+    return { ...this.signToken(user), message: SUCCESS_MESSAGES.AUTH.REGISTER };
   }
 
-  async login(dto: LoginDto): Promise<{ access_token: string }> {
+  async login(dto: LoginDto): Promise<{ access_token: string; message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
     });
@@ -52,7 +53,7 @@ export class AuthService {
       throw new UnauthorizedException(ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
-    return this.signToken(user);
+    return { ...this.signToken(user), message: SUCCESS_MESSAGES.AUTH.LOGIN };
   }
 
   async validateUserById(userId: string): Promise<User | null> {
