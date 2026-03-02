@@ -271,7 +271,7 @@ Complete or update the current user’s profile.
 
 | Field          | Type   | Required | Description                    |
 |----------------|--------|----------|--------------------------------|
-| profilePhoto  | string | No       | URL                            |
+| profilePhoto  | string | No       | HTTP(S) URL, or base64 (data URL `data:image/...;base64,...` or raw base64 from app) |
 | firstName     | string | Yes      | Max 100 chars                  |
 | lastName      | string | Yes      | Max 100 chars                  |
 | gender        | enum   | Yes      | `MALE`, `FEMALE`, `OTHER`      |

@@ -4,11 +4,11 @@ import {
   IsDateString,
   IsNumber,
   IsOptional,
-  IsUrl,
   Min,
   Max,
   MaxLength,
 } from 'class-validator';
+import { IsProfilePhoto } from '../../common/validators/profile-photo.validator';
 
 export enum Gender {
   MALE = 'MALE',
@@ -24,8 +24,9 @@ export enum MaritalStatus {
 }
 
 export class CompleteProfileDto {
+  /** Profile photo: HTTP(S) URL, or base64 (data:image/...;base64,... or raw base64 from app). */
   @IsOptional()
-  @IsUrl()
+  @IsProfilePhoto()
   profilePhoto?: string;
 
   @IsString()

@@ -73,13 +73,24 @@ export class ProfileService {
     };
   }
 
+  /** Normalize profile photo: if app sends raw base64, store as data URL so listing returns usable img src. */
+  private normalizeProfilePhoto(value: string | undefined): string | undefined {
+    if (value == null || value === '') return undefined;
+    if (value.startsWith('data:') || value.startsWith('http://') || value.startsWith('https://'))
+      return value;
+    if (/^[A-Za-z0-9+/]*={0,2}$/.test(value.replace(/\s/g, '')))
+      return `data:image/jpeg;base64,${value}`;
+    return value;
+  }
+
   async completeProfile(userId: string, dto: CompleteProfileDto) {
     const dateOfBirth = new Date(dto.dateOfBirth);
+    const profilePhoto = this.normalizeProfilePhoto(dto.profilePhoto);
 
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
-        profilePhoto: dto.profilePhoto,
+        profilePhoto,
         firstName: dto.firstName,
         lastName: dto.lastName,
         gender: dto.gender as Gender,
