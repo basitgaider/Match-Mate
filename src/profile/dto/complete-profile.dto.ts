@@ -9,6 +9,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { IsProfilePhoto } from '../../common/validators/profile-photo.validator';
+import { EducationLevel } from '@prisma/client';
 
 export enum Gender {
   MALE = 'MALE',
@@ -54,9 +55,8 @@ export class CompleteProfileDto {
   @MaxLength(150)
   profession: string;
 
-  @IsString()
-  @MaxLength(200)
-  education: string;
+  @IsEnum(EducationLevel)
+  education: EducationLevel;
 
   @IsNumber()
   @Min(50, { message: 'Height must be at least 50 cm' })

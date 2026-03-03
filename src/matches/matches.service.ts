@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ERROR_MESSAGES } from '../constants/error-messages';
 import { SUCCESS_MESSAGES } from '../constants/success-messages';
-import { User, PartnerPreference, EducationPreference } from '@prisma/client';
+import { User, PartnerPreference, EducationLevel } from '@prisma/client';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
@@ -281,37 +281,13 @@ export class MatchesService {
     return age;
   }
 
-  private educationMatchesPreference(
-    preferred: EducationPreference,
-    targetEducation: string | null,
-  ): boolean {
-    if (!targetEducation?.trim()) return true;
-    const ed = targetEducation.toLowerCase();
-    switch (preferred) {
-      case 'RANDOM':
-        return true;
-      case 'COMMON':
-        return /high\s*school|bachelor|bsc|ba\s*|bs\s*|master|msc|ma\s*|phd|common/i.test(ed);
-      case 'HIGH_SCHOOL':
-        return /high\s*school|secondary|school/i.test(ed);
-      case 'BACHELOR':
-        return /bachelor|bsc|b\.s\.|bs\s|ba\s|b\.a\./i.test(ed);
-      case 'MASTER':
-        return /master|msc|ms\s|ma\s|m\.s\.|m\.a\./i.test(ed);
-      case 'PHD':
-        return /phd|ph\.d|doctorate/i.test(ed);
-      default:
-        return true;
-    }
-  }
-
   private computeMatchPercentage(
     currentUser: User & { partnerPreference: PartnerPreference | null },
     targetUser: {
       dateOfBirth: Date | null;
       location: string | null;
       gender: string | null;
-      education: string | null;
+      education: EducationLevel | null;
       profession: string | null;
       maritalStatus: string | null;
     },
@@ -361,13 +337,9 @@ export class MatchesService {
     }
 
     if (pref?.preferredEducation && targetUser.education != null) {
-      educationScore = this.educationMatchesPreference(
-        pref.preferredEducation,
-        targetUser.education,
-      )
-        ? 100
-        : 30;
-    } else if (!pref?.preferredEducation || pref.preferredEducation === 'RANDOM') {
+      educationScore =
+        pref.preferredEducation === targetUser.education ? 100 : 30;
+    } else if (!pref?.preferredEducation) {
       educationScore = 50;
     }
 

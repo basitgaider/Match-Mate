@@ -7,7 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MatchesService } from '../matches/matches.service';
 import { CompleteProfileDto } from './dto/complete-profile.dto';
 import { PartnerPreferenceDto } from './dto/partner-preference.dto';
-import { Gender, MaritalStatus } from '@prisma/client';
+import { Gender, MaritalStatus, EducationLevel } from '@prisma/client';
 import { ERROR_MESSAGES } from '../constants/error-messages';
 import { SUCCESS_MESSAGES } from '../constants/success-messages';
 
@@ -140,7 +140,7 @@ export class ProfileService {
         maritalStatus: dto.maritalStatus as MaritalStatus,
         dateOfBirth,
         profession: dto.profession,
-        education: dto.education,
+        education: dto.education as EducationLevel,
         height: dto.height,
         aboutYourself: dto.aboutYourself,
       },

@@ -19,9 +19,7 @@ enum MaritalStatus {
   DIVORCED
 }
 
-enum EducationPreference {
-  RANDOM
-  COMMON
+enum EducationLevel {
   HIGH_SCHOOL
   BACHELOR
   MASTER
@@ -44,7 +42,7 @@ model User {
   maritalStatus    MaritalStatus?
   dateOfBirth      DateTime?
   profession       String?
-  education        String?
+  education        EducationLevel?
   height           Float?
   aboutYourself    String?
   createdAt        DateTime       @default(now())
@@ -67,7 +65,7 @@ model PartnerPreference {
   minAge                 Int
   maxAge                 Int
   preferredCities        String[]
-  preferredEducation     EducationPreference?
+  preferredEducation     EducationLevel?
   preferredMaritalStatus MaritalStatus[] @default([])
   createdAt              DateTime              @default(now())
   updatedAt              DateTime              @updatedAt
