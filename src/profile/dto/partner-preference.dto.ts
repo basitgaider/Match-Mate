@@ -3,6 +3,7 @@ import {
   IsInt,
   IsArray,
   IsString,
+  IsOptional,
   Min,
   Max,
   ArrayMaxSize,
@@ -10,6 +11,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Gender } from './complete-profile.dto';
+import { EducationPreference, MaritalStatus } from '@prisma/client';
 
 export class PartnerPreferenceDto {
   @IsEnum(Gender)
@@ -32,4 +34,16 @@ export class PartnerPreferenceDto {
   @MaxLength(100, { each: true })
   @ArrayMaxSize(20, { message: 'preferredCities must have at most 20 items' })
   preferredCities: string[];
+
+  /** Preferred education level of partner: RANDOM (any), COMMON, HIGH_SCHOOL, BACHELOR, MASTER, PHD */
+  @IsOptional()
+  @IsEnum(EducationPreference)
+  preferredEducation?: EducationPreference;
+
+  /** Preferred marital status(es) of partner. Empty = no filter. */
+  @IsOptional()
+  @IsArray()
+  @IsEnum(MaritalStatus, { each: true })
+  @ArrayMaxSize(4)
+  preferredMaritalStatus?: MaritalStatus[];
 }

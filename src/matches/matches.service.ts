@@ -4,14 +4,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ERROR_MESSAGES } from '../constants/error-messages';
 import { SUCCESS_MESSAGES } from '../constants/success-messages';
-import { User, PartnerPreference } from '@prisma/client';
+import { User, PartnerPreference, EducationPreference } from '@prisma/client';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
-const WEIGHT_AGE = 0.5;
-const WEIGHT_LOCATION = 0.35;
+const WEIGHT_AGE = 0.4;
+const WEIGHT_LOCATION = 0.25;
 const WEIGHT_GENDER = 0.15;
+const WEIGHT_EDUCATION = 0.1;
+const WEIGHT_MARITAL = 0.1;
 const MATCH_THRESHOLD = 60;
 const MAX_CANDIDATES_PER_USER = 500;
 
@@ -83,6 +85,7 @@ export class MatchesService {
               gender: true,
               profession: true,
               education: true,
+              maritalStatus: true,
             },
           },
         },
@@ -211,6 +214,7 @@ export class MatchesService {
         gender: true,
         education: true,
         profession: true,
+        maritalStatus: true,
       },
       take: MAX_CANDIDATES_PER_USER,
     });
@@ -253,6 +257,7 @@ export class MatchesService {
             gender: true,
             education: true,
             profession: true,
+            maritalStatus: true,
           },
         },
       },
@@ -276,6 +281,30 @@ export class MatchesService {
     return age;
   }
 
+  private educationMatchesPreference(
+    preferred: EducationPreference,
+    targetEducation: string | null,
+  ): boolean {
+    if (!targetEducation?.trim()) return true;
+    const ed = targetEducation.toLowerCase();
+    switch (preferred) {
+      case 'RANDOM':
+        return true;
+      case 'COMMON':
+        return /high\s*school|bachelor|bsc|ba\s*|bs\s*|master|msc|ma\s*|phd|common/i.test(ed);
+      case 'HIGH_SCHOOL':
+        return /high\s*school|secondary|school/i.test(ed);
+      case 'BACHELOR':
+        return /bachelor|bsc|b\.s\.|bs\s|ba\s|b\.a\./i.test(ed);
+      case 'MASTER':
+        return /master|msc|ms\s|ma\s|m\.s\.|m\.a\./i.test(ed);
+      case 'PHD':
+        return /phd|ph\.d|doctorate/i.test(ed);
+      default:
+        return true;
+    }
+  }
+
   private computeMatchPercentage(
     currentUser: User & { partnerPreference: PartnerPreference | null },
     targetUser: {
@@ -284,12 +313,15 @@ export class MatchesService {
       gender: string | null;
       education: string | null;
       profession: string | null;
+      maritalStatus: string | null;
     },
   ): number {
     const pref = currentUser.partnerPreference;
     let ageScore = 50;
     let locationScore = 50;
     let genderScore = 50;
+    let educationScore = 50;
+    let maritalScore = 50;
 
     if (pref && targetUser.dateOfBirth) {
       const age = this.getAge(targetUser.dateOfBirth);
@@ -325,14 +357,36 @@ export class MatchesService {
     }
 
     if (pref && targetUser.gender) {
-      genderScore =
-        pref.interestedIn === targetUser.gender ? 100 : 0;
+      genderScore = pref.interestedIn === targetUser.gender ? 100 : 0;
+    }
+
+    if (pref?.preferredEducation && targetUser.education != null) {
+      educationScore = this.educationMatchesPreference(
+        pref.preferredEducation,
+        targetUser.education,
+      )
+        ? 100
+        : 30;
+    } else if (!pref?.preferredEducation || pref.preferredEducation === 'RANDOM') {
+      educationScore = 50;
+    }
+
+    if (pref?.preferredMaritalStatus?.length && targetUser.maritalStatus) {
+      maritalScore = (
+        pref.preferredMaritalStatus as readonly string[]
+      ).includes(targetUser.maritalStatus)
+        ? 100
+        : 0;
+    } else if (!pref?.preferredMaritalStatus?.length) {
+      maritalScore = 50;
     }
 
     const raw =
       ageScore * WEIGHT_AGE +
       locationScore * WEIGHT_LOCATION +
-      genderScore * WEIGHT_GENDER;
+      genderScore * WEIGHT_GENDER +
+      educationScore * WEIGHT_EDUCATION +
+      maritalScore * WEIGHT_MARITAL;
     return Math.round(Math.min(100, Math.max(0, raw)));
   }
 }

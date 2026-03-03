@@ -32,7 +32,14 @@ export class ProfileService {
 
   async listProfiles(
     currentUserId: string,
-    options: { city?: 'my_city' | 'all'; page?: number; limit?: number },
+    options: {
+      city?: 'my_city' | 'all';
+      search?: string;
+      minAge?: number;
+      maxAge?: number;
+      page?: number;
+      limit?: number;
+    },
   ) {
     const page = Math.max(1, options.page ?? DEFAULT_PAGE);
     const limit = Math.min(MAX_LIMIT, Math.max(1, options.limit ?? DEFAULT_LIMIT));
@@ -43,12 +50,47 @@ export class ProfileService {
       select: { location: true },
     });
 
-    const where: { profileCompleted: boolean; id?: { not: string }; location?: string } = {
+    const where: {
+      profileCompleted: boolean;
+      id?: { not: string };
+      location?: string;
+      AND?: Array<Record<string, unknown>>;
+      OR?: Array<Record<string, unknown>>;
+      dateOfBirth?: { gte?: Date; lte?: Date };
+    } = {
       profileCompleted: true,
       id: { not: currentUserId },
     };
     if (options.city === 'my_city' && currentUser?.location) {
       where.location = currentUser.location;
+    }
+
+    const andParts: Array<Record<string, unknown>> = [];
+
+    if (options.search?.trim()) {
+      const term = options.search.trim();
+      const searchConditions: Array<Record<string, unknown>> = [
+        { firstName: { contains: term, mode: 'insensitive' as const } },
+        { lastName: { contains: term, mode: 'insensitive' as const } },
+        { location: { contains: term, mode: 'insensitive' as const } },
+      ];
+      const searchAge = parseInt(term, 10);
+      if (!Number.isNaN(searchAge) && searchAge >= 18 && searchAge <= 120) {
+        const { gte, lte } = this.dateOfBirthRangeForAge(searchAge, searchAge);
+        searchConditions.push({ dateOfBirth: { gte, lte } });
+      }
+      andParts.push({ OR: searchConditions });
+    }
+
+    if (options.minAge != null || options.maxAge != null) {
+      const min = options.minAge ?? 18;
+      const max = options.maxAge ?? 120;
+      const { gte, lte } = this.dateOfBirthRangeForAge(min, max);
+      andParts.push({ dateOfBirth: { gte, lte } });
+    }
+
+    if (andParts.length > 0) {
+      where.AND = andParts;
     }
 
     const [profiles, total] = await Promise.all([
@@ -122,12 +164,16 @@ export class ProfileService {
         minAge: dto.minAge,
         maxAge: dto.maxAge,
         preferredCities: dto.preferredCities,
+        preferredEducation: dto.preferredEducation ?? undefined,
+        preferredMaritalStatus: dto.preferredMaritalStatus ?? [],
       },
       update: {
         interestedIn: dto.interestedIn as Gender,
         minAge: dto.minAge,
         maxAge: dto.maxAge,
         preferredCities: dto.preferredCities,
+        preferredEducation: dto.preferredEducation ?? undefined,
+        preferredMaritalStatus: dto.preferredMaritalStatus ?? [],
       },
     });
 
@@ -158,6 +204,15 @@ export class ProfileService {
     }
   }
 
+  /** Date range so that age is between minAge and maxAge (inclusive). */
+  private dateOfBirthRangeForAge(minAge: number, maxAge: number): { gte: Date; lte: Date } {
+    const now = new Date();
+    return {
+      gte: new Date(now.getFullYear() - maxAge - 1, now.getMonth(), now.getDate()),
+      lte: new Date(now.getFullYear() - minAge, now.getMonth(), now.getDate(), 23, 59, 59, 999),
+    };
+  }
+
   private publicProfileSelect() {
     return {
       id: true,
@@ -173,6 +228,8 @@ export class ProfileService {
       height: true,
       aboutYourself: true,
       profileCompleted: true,
+      isVerified: true,
+      isPremiumMember: true,
       createdAt: true,
       updatedAt: true,
       partnerPreference: true,

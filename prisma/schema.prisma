@@ -19,12 +19,23 @@ enum MaritalStatus {
   DIVORCED
 }
 
+enum EducationPreference {
+  RANDOM
+  COMMON
+  HIGH_SCHOOL
+  BACHELOR
+  MASTER
+  PHD
+}
+
 model User {
   id               String         @id @default(uuid())
   email            String         @unique
   password         String
   phoneNumber      String?
   profileCompleted Boolean        @default(false)
+  isVerified       Boolean        @default(false)
+  isPremiumMember  Boolean        @default(false)
   profilePhoto     String?
   firstName        String?
   lastName         String?
@@ -49,15 +60,17 @@ model User {
 }
 
 model PartnerPreference {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  interestedIn    Gender
-  minAge          Int
-  maxAge          Int
-  preferredCities String[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                    String                @id @default(uuid())
+  userId                 String                @unique
+  user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interestedIn           Gender
+  minAge                 Int
+  maxAge                 Int
+  preferredCities        String[]
+  preferredEducation     EducationPreference?
+  preferredMaritalStatus MaritalStatus[] @default([])
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
 }
 
 model Favourite {

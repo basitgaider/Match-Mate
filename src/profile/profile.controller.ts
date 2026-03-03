@@ -24,6 +24,9 @@ export class ProfileController {
   ) {
     return this.profileService.listProfiles(userId, {
       city: query.city,
+      search: query.search,
+      minAge: query.minAge,
+      maxAge: query.maxAge,
       page: query.page,
       limit: query.limit,
     });
