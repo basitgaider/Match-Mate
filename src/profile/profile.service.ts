@@ -52,14 +52,12 @@ export class ProfileService {
 
     const where: {
       profileCompleted: boolean;
-      id?: { not: string };
       location?: string;
       AND?: Array<Record<string, unknown>>;
       OR?: Array<Record<string, unknown>>;
       dateOfBirth?: { gte?: Date; lte?: Date };
     } = {
       profileCompleted: true,
-      id: { not: currentUserId },
     };
     if (options.city === 'my_city' && currentUser?.location) {
       where.location = currentUser.location;
