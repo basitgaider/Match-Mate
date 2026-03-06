@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   ConflictException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchesService } from '../matches/matches.service';
@@ -28,6 +29,35 @@ export class ProfileService {
       include: { partnerPreference: true },
     });
     return this.sanitizeUser(user);
+  }
+
+  /** Fetch detailed profile by id. Only completed profiles; 404 otherwise. */
+  async getProfileById(currentUserId: string, profileId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: profileId,
+        profileCompleted: true,
+      },
+      select: this.publicProfileSelect(),
+    });
+    if (!user) {
+      throw new NotFoundException(ERROR_MESSAGES.PROFILE.PROFILE_NOT_FOUND);
+    }
+    const sanitized = this.sanitizeUser(user);
+    const age =
+      user.dateOfBirth != null
+        ? this.getAgeFromDateOfBirth(user.dateOfBirth)
+        : null;
+    return { data: { ...sanitized, age } };
+  }
+
+  private getAgeFromDateOfBirth(dateOfBirth: Date): number {
+    const today = new Date();
+    const birth = new Date(dateOfBirth);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
   }
 
   async listProfiles(

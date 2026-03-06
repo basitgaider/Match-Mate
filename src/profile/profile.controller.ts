@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Param, Query, UseGuards } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { CompleteProfileDto } from './dto/complete-profile.dto';
 import { PartnerPreferenceDto } from './dto/partner-preference.dto';
@@ -30,6 +30,14 @@ export class ProfileController {
       page: query.page,
       limit: query.limit,
     });
+  }
+
+  @Get(ROUTES.PROFILE.ID)
+  async getProfileById(
+    @Param('id') profileId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.profileService.getProfileById(userId, profileId);
   }
 
   @Patch(ROUTES.PROFILE.COMPLETE)

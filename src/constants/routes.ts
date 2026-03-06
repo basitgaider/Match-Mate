@@ -8,6 +8,7 @@ export const ROUTES = {
     ROOT: 'profile',
     ME: 'me',
     LIST: 'list',
+    ID: ':id',
     COMPLETE: 'complete',
     PARTNER_PREFERENCE: 'partner-preference',
   },

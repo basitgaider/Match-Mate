@@ -9,11 +9,12 @@ import { User, PartnerPreference, EducationLevel } from '@prisma/client';
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
-const WEIGHT_AGE = 0.4;
-const WEIGHT_LOCATION = 0.25;
-const WEIGHT_GENDER = 0.15;
-const WEIGHT_EDUCATION = 0.1;
-const WEIGHT_MARITAL = 0.1;
+/** Gender is the primary, necessary aspect: must match preferred gender. */
+const WEIGHT_GENDER = 0.5;
+const WEIGHT_AGE = 0.25;
+const WEIGHT_LOCATION = 0.15;
+const WEIGHT_EDUCATION = 0.05;
+const WEIGHT_MARITAL = 0.05;
 const MATCH_THRESHOLD = 60;
 const MAX_CANDIDATES_PER_USER = 500;
 
@@ -203,6 +204,7 @@ export class MatchesService {
         id: { not: userId },
         profileCompleted: true,
         dateOfBirth: { not: null },
+        gender: currentUser.partnerPreference.interestedIn,
       },
       select: {
         id: true,
@@ -293,6 +295,9 @@ export class MatchesService {
     },
   ): number {
     const pref = currentUser.partnerPreference;
+    if (pref && targetUser.gender && pref.interestedIn !== targetUser.gender) {
+      return 0;
+    }
     let ageScore = 50;
     let locationScore = 50;
     let genderScore = 50;
